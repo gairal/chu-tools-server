@@ -26,6 +26,7 @@
   "devDependencies": {
     "@types/dotenv": "^6.1",
     "@types/query-string": "^6.2",
+    "@types/twit": "^2.2",
     "fastify": "^1.14",
     "nodemon": "^1.18",
     "prettier": "^1.16",

@@ -34,7 +34,7 @@ export default abstract class FBFunction implements IFunction, IIntent {
     this.corsMiddelware = cors({
       origin: (origin: string, cb: any) => {
         if (
-          ['http://localhost:3000', 'https://virtualchu.gairal.com'].indexOf(
+          ['http://localhost:3000', 'https://chools.gairal.rocks'].indexOf(
             origin,
           ) !== -1
         ) {
