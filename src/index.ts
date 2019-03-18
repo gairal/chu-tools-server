@@ -1,10 +1,9 @@
 import * as admin from 'firebase-admin';
 
 import Auth from './functions/Auth';
-import Tweet from './functions/Tweet';
+import Tweets from './functions/Tweets';
 
 admin.initializeApp();
 
 export const auth = Auth.init();
-
-export const tweet = Tweet.init();
+export const tweets = Tweets.init();

@@ -7,7 +7,7 @@ const fast = fastify();
 admin.initializeApp();
 
 import Auth from './functions/Auth';
-import Tweet from './functions/Tweet';
+import Tweets from './functions/Tweets';
 
 const route = async (
   request: fastify.FastifyRequest<
@@ -35,8 +35,8 @@ fast.get('/auth', async request => {
   return route(request, Auth);
 });
 
-fast.get('/Tweet', async request => {
-  return route(request, Tweet, request.query as { q: string });
+fast.get('/tweets', async request => {
+  return route(request, Tweets, request.query as { q: string });
 });
 
 const start = async () => {

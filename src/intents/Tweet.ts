@@ -3,8 +3,8 @@ import * as Twit from 'twit';
 import config from '../config';
 import Intent from './ChuIntent';
 
-interface ICookingParam {
-  ingredient: string;
+interface ITweetParam {
+  term: string;
 }
 
 export default class Tweet extends Intent {
@@ -13,8 +13,7 @@ export default class Tweet extends Intent {
     super();
 
     this.twit = new Twit({
-      access_token: config.twitter.accessToken,
-      access_token_secret: config.twitter.accessTokenSecret,
+      app_only_auth: true,
       consumer_key: config.twitter.consumerKey,
       consumer_secret: config.twitter.consumerSecret,
       strictSSL: true,
@@ -23,20 +22,18 @@ export default class Tweet extends Intent {
 
   public async request(
     token: admin.auth.DecodedIdToken,
-    q: ICookingParam = { ingredient: 'salt' },
+    q: ITweetParam = { term: 'linkedin' },
   ) {
     try {
       const result = await this.twit.get('search/tweets', {
         count: 100,
-        q: 'banana since:2011-07-11',
+        q: q.term,
       });
-      console.log(result);
 
       return {
         result,
       };
     } catch (err) {
-      console.log(err);
       return null;
     }
   }

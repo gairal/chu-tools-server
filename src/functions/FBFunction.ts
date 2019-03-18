@@ -2,8 +2,8 @@ import * as cors from 'cors';
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 
-import config from '../../config';
-import Intent, { IIntent } from '../../intents/ChuIntent';
+import config from '../config';
+import Intent, { IIntent } from '../intents/ChuIntent';
 
 interface ICorsReturn {
   req: functions.Request;
@@ -34,9 +34,11 @@ export default abstract class FBFunction implements IFunction, IIntent {
     this.corsMiddelware = cors({
       origin: (origin: string, cb: any) => {
         if (
-          ['http://localhost:3000', 'https://chools.gairal.rocks'].indexOf(
-            origin,
-          ) !== -1
+          [
+            'http://localhost:3000',
+            'http://localhost:8181',
+            'https://chools.gairal.rocks',
+          ].indexOf(origin) !== -1
         ) {
           cb(null, true);
         } else {
