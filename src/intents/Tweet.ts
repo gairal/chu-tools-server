@@ -7,6 +7,44 @@ interface ITweetParam {
   term: string;
 }
 
+interface ITweeturls {
+  url: string;
+  expanded_url: string;
+  indices: number[];
+}
+
+interface ITweetHashtag {
+  text: string;
+  indices: number[];
+}
+
+interface ITweetEntities {
+  hashtags: ITweetHashtag[];
+  urls: ITweeturls[];
+}
+
+interface ITweetStatus {
+  created_at: Date;
+  entities: ITweetEntities;
+  id: number;
+  text: string;
+  url: string;
+}
+
+interface ITweetData {
+  statuses: ITweetStatus[];
+}
+
+const format = (data: ITweetData): ITweetStatus[] => {
+  return data.statuses.map(({ created_at, entities, id, text }) => ({
+    created_at,
+    entities,
+    id,
+    text,
+    url: `https://twitter.com/user/status/${id}`,
+  }));
+};
+
 export default class Tweet extends Intent {
   public twit: Twit = null;
   constructor() {
@@ -30,9 +68,7 @@ export default class Tweet extends Intent {
         q: q.term,
       });
 
-      return {
-        result,
-      };
+      return format(result.data as ITweetData);
     } catch (err) {
       return null;
     }
