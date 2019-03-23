@@ -22,10 +22,10 @@ const route = async (
 ) => {
   try {
     const fun = new FunctionType();
-    const decodedIdToken = await fun.validateFirebaseIdToken(
-      request.req as functions.Request,
-    );
-    return await fun.request(decodedIdToken, params);
+    // const decodedIdToken = await fun.validateFirebaseIdToken(
+    //   request.req as functions.Request,
+    // );
+    return await fun.request(null, params);
   } catch (err) {
     return err;
   }

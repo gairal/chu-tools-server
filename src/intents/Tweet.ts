@@ -28,6 +28,7 @@ interface ITweetStatus {
   created_at: Date;
   entities: ITweetEntities;
   id: number;
+  id_str?: string;
   text: string;
   url: string;
 }
@@ -37,12 +38,12 @@ interface ITweetData {
 }
 
 const format = (data: ITweetData): ITweetStatus[] => {
-  return data.statuses.map(({ created_at, entities, id, text }) => ({
+  return data.statuses.map(({ created_at, entities, id, id_str, text }) => ({
     created_at,
     entities,
     id,
     text,
-    url: `https://twitter.com/user/status/${id}`,
+    url: `https://twitter.com/user/status/${id_str}`,
   }));
 };
 
