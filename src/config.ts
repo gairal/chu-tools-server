@@ -4,7 +4,11 @@ import * as functions from 'firebase-functions';
 const fbConfig = functions.config();
 
 const config = {
-  authorizedEmails: ['peperdro@gmail.com', 'unkrich.kristine@gmail.com'],
+  authorizedEmails: [
+    'peperdro@gmail.com',
+    'unkrich.kristine@gmail.com',
+    'frank@autofi.io',
+  ],
   google: {
     apiKey: fbConfig.google ? fbConfig.google.key : process.env.GOOGLE_KEY,
   },
