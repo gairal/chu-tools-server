@@ -5,6 +5,7 @@ import Intent from './ChuIntent';
 
 interface ITweetParam {
   term: string;
+  count: number;
 }
 
 interface ITweeturls {
@@ -59,12 +60,12 @@ export default class Tweet extends Intent {
   }
 
   public async request(
-    token: admin.auth.DecodedIdToken,
-    q: ITweetParam = { term: 'linkedin' },
+    _: admin.auth.DecodedIdToken,
+    q: ITweetParam = { term: 'linkedin', count: 50 },
   ) {
     try {
       const result = await this.twit.get('search/tweets', {
-        count: 100,
+        count: q.count,
         q: q.term,
       });
 
