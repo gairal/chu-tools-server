@@ -19,7 +19,6 @@ const config = {
     email: fbConfig.sheet
       ? fbConfig.sheet.email
       : process.env.SHEET_SERVICE_ACCOUNT_EMAIL,
-    id: fbConfig.sheet ? fbConfig.sheet.id : process.env.SHEET_ID,
     privateKey: fbConfig.sheet
       ? fbConfig.sheet.private_key
       : process.env.SHEET_SERVICE_ACCOUNT_PRIVATE_KEY,

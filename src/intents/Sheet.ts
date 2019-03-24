@@ -37,6 +37,7 @@ interface ISheetParam {
   positive: string;
   negative: string;
   neutral: string;
+  spreadsheetId: string;
 }
 
 export default class Sheet extends Intent {
@@ -104,7 +105,6 @@ export default class Sheet extends Intent {
   };
 
   private apiKey: string = null;
-  private sheetId: string = null;
   private sheets: sheets_v4.Sheets = null;
   private jwtClient: JWT = null;
   private twitter: Twitter = null;
@@ -112,11 +112,9 @@ export default class Sheet extends Intent {
     super('sheet');
 
     this.apiKey = config.sheet.apiKey;
-    this.sheetId = config.sheet.id;
     this.sheets = google.sheets({ version: 'v4' });
     this.jwtClient = new google.auth.JWT({
       email: config.sheet.email,
-      // key: creds.private_key,
       key: config.sheet.privateKey,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
@@ -124,9 +122,9 @@ export default class Sheet extends Intent {
     this.twitter = new Twitter();
   }
 
-  public async request(auth: IAuthReturn, ids: ISheetParam) {
+  public async request(auth: IAuthReturn, params: ISheetParam) {
     try {
-      const values = await this.getOrderedTweets(ids);
+      const values = await this.getOrderedTweets(params);
 
       await this.jwtClient.authorize();
       const result = await this.sheets.spreadsheets.values.append({
@@ -134,13 +132,13 @@ export default class Sheet extends Intent {
         key: this.apiKey,
         range: 'A1',
         requestBody: { values },
-        spreadsheetId: this.sheetId,
+        spreadsheetId: params.spreadsheetId,
         valueInputOption: 'USER_ENTERED',
       });
 
       return Sheet.format(result as ISheetData);
     } catch (e) {
-      console.error({ e, auth, ids }, 'error while saving to GSheet');
+      console.error({ e, auth, params }, 'error while saving to GSheet');
       return null;
     }
   }
