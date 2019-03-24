@@ -25,6 +25,8 @@ interface ITweetStatus {
   id_str?: string;
   text: string;
   url: string;
+  retweet_count: number;
+  lang: string;
 }
 
 interface ITweetData {
@@ -33,13 +35,17 @@ interface ITweetData {
 
 export default class Twitter {
   public static format = (data: ITweetStatus[]): ITweetStatus[] => {
-    return data.map(({ created_at, entities, id_str, text }) => ({
-      created_at,
-      entities,
-      text,
-      id: id_str,
-      url: `https://twitter.com/user/status/${id_str}`,
-    }));
+    return data.map(
+      ({ created_at, entities, id_str, lang, text, retweet_count }) => ({
+        created_at,
+        entities,
+        lang,
+        retweet_count,
+        text,
+        id: id_str,
+        url: `https://twitter.com/user/status/${id_str}`,
+      }),
+    );
   };
 
   private twit: Twit = null;

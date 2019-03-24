@@ -155,6 +155,7 @@ export default class Sheet extends Intent {
         (rows, { created_at, id, text, url }) =>
           rows.concat([
             [
+              id,
               Sheet.formatDate(created_at),
               text,
               null,
