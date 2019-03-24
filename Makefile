@@ -17,7 +17,7 @@ build:
 	npm run build
 
 .PHONY: deploy
-release:
+deploy:
 	make install
 	npm run deploy
 

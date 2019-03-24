@@ -1,15 +1,15 @@
-import * as admin from 'firebase-admin';
-import FBFunction from './FBFunction';
+import FBFunction, { IAuthReturn } from './FBFunction';
 
 export default class Auth extends FBFunction {
-  public async request(token: admin.auth.DecodedIdToken) {
-    if (!token.name) {
+  public async request(auth: IAuthReturn) {
+    const { name } = auth.decodedIdToken;
+    if (!name) {
       throw new Error('Auth Failed');
     }
 
     return {
+      name,
       authorized: true,
-      name: token.name,
       status: 200,
     };
   }

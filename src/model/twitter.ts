@@ -1,0 +1,84 @@
+import * as Twit from 'twit';
+
+import config from '../config';
+
+interface ITweeturls {
+  url: string;
+  expanded_url: string;
+  indices: number[];
+}
+
+interface ITweetHashtag {
+  text: string;
+  indices: number[];
+}
+
+interface ITweetEntities {
+  hashtags: ITweetHashtag[];
+  urls: ITweeturls[];
+}
+
+interface ITweetStatus {
+  created_at: Date;
+  entities: ITweetEntities;
+  id: string;
+  id_str?: string;
+  text: string;
+  url: string;
+}
+
+interface ITweetData {
+  statuses: ITweetStatus[];
+}
+
+export default class Twitter {
+  private twit: Twit = null;
+  constructor() {
+    this.twit = new Twit({
+      app_only_auth: true,
+      consumer_key: config.twitter.consumerKey,
+      consumer_secret: config.twitter.consumerSecret,
+      strictSSL: true,
+    });
+  }
+
+  public format = (data: ITweetStatus[]): ITweetStatus[] => {
+    return data.map(({ created_at, entities, id_str, text }) => ({
+      created_at,
+      entities,
+      text,
+      id: id_str,
+      url: `https://twitter.com/user/status/${id_str}`,
+    }));
+  };
+
+  public async get(ids: string[]) {
+    try {
+      const result = await this.twit.get('statuses/lookup', {
+        id: ids.join(','),
+      });
+
+      return this.format(result.data as ITweetStatus[]);
+    } catch (e) {
+      const reason = new Error('failed searching tweets');
+      reason.stack += `\nCaused By:\n ${e.stack}`;
+      throw reason;
+    }
+  }
+
+  public async search(term: string, count: number = 50) {
+    try {
+      const result = await this.twit.get('search/tweets', {
+        count,
+        q: term,
+      });
+
+      return this.format((result.data as ITweetData)
+        .statuses as ITweetStatus[]);
+    } catch (e) {
+      const reason = new Error('failed searching tweets');
+      reason.stack += `\nCaused By:\n ${e.stack}`;
+      throw reason;
+    }
+  }
+}

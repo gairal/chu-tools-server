@@ -5,6 +5,11 @@ import * as functions from 'firebase-functions';
 import config from '../config';
 import Intent, { IIntent } from '../intents/ChuIntent';
 
+export interface IAuthReturn {
+  decodedIdToken: admin.auth.DecodedIdToken;
+  idToken: string;
+}
+
 interface ICorsReturn {
   req: functions.Request;
   res: functions.Response;
@@ -63,15 +68,15 @@ export default abstract class FBFunction implements IFunction, IIntent {
   }
 
   public async request(
-    token: admin.auth.DecodedIdToken,
+    auth: IAuthReturn,
     query?: functions.Request['query'],
   ): Promise<any> {
-    return this.intent.request(token, query);
+    return this.intent.request(auth, query);
   }
 
   public async validateFirebaseIdToken(
     req: functions.Request,
-  ): Promise<admin.auth.DecodedIdToken> {
+  ): Promise<IAuthReturn> {
     const err: IError = new Error('Unauthorized');
     err.status = 403;
     err.authorized = false;
@@ -91,7 +96,7 @@ export default abstract class FBFunction implements IFunction, IIntent {
         .auth()
         .verifyIdToken(idToken)
         .then(this.validateEmail)
-        .then(resolve)
+        .then(decodedIdToken => resolve({ decodedIdToken, idToken }))
         .catch(error => {
           err.message = error.message;
           reject(err);
@@ -101,13 +106,10 @@ export default abstract class FBFunction implements IFunction, IIntent {
 
   protected async onRequest(req: functions.Request, res: functions.Response) {
     try {
-      const decodedIdToken: admin.auth.DecodedIdToken = await this.validateFirebaseIdToken(
-        req,
-      );
-      const data = await this.request(decodedIdToken, req.query);
+      const authReturn: IAuthReturn = await this.validateFirebaseIdToken(req);
+      const data = await this.request(authReturn, req.query);
       res.send(data);
     } catch (err) {
-      // tslint:disable-next-line no-console
       console.error(err);
 
       if (err.status) {

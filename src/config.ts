@@ -1,3 +1,4 @@
+import { Logging } from '@google-cloud/logging';
 import 'dotenv/config';
 import * as functions from 'firebase-functions';
 
@@ -9,15 +10,26 @@ const config = {
     'unkrich.kristine@gmail.com',
     'frank@autofi.io',
   ],
-  google: {
-    apiKey: fbConfig.google ? fbConfig.google.key : process.env.GOOGLE_KEY,
+  // google: {
+  //   apiKey: fbConfig.google ? fbConfig.google.key : process.env.GOOGLE_KEY,
+  // },
+  logging: new Logging(),
+  sheet: {
+    apiKey: fbConfig.sheet ? fbConfig.sheet.key : process.env.SHEET_KEY,
+    email: fbConfig.sheet
+      ? fbConfig.sheet.email
+      : process.env.SHEET_SERVICE_ACCOUNT_EMAIL,
+    id: fbConfig.sheet ? fbConfig.sheet.id : process.env.SHEET_ID,
+    privateKey: fbConfig.sheet
+      ? fbConfig.sheet.private_key
+      : process.env.SHEET_SERVICE_ACCOUNT_PRIVATE_KEY,
   },
   twitter: {
     consumerKey: fbConfig.twitter
-      ? fbConfig.twitter.consumerKey
+      ? fbConfig.twitter.consumer_key
       : process.env.TWITTER_CONSUMER_KEY,
     consumerSecret: fbConfig.twitter
-      ? fbConfig.twitter.consumerSecret
+      ? fbConfig.twitter.consumer_secret
       : process.env.TWITTER_CONSUMER_SECRET,
   },
 };

@@ -14,6 +14,7 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "@google-cloud/logging": "4.5.1",
     "axios": "^0.18",
     "cors": "^2.8",
     "dotenv": "^7.0",

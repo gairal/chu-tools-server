@@ -4,6 +4,7 @@
     "module": "commonjs",
     "noImplicitReturns": true,
     "outDir": "lib",
+    "resolveJsonModule": true,
     "sourceMap": true,
     "target": "es2017",
     "typeRoots": ["./node_modules/@types", "./types"]

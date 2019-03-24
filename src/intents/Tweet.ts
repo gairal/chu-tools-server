@@ -1,6 +1,6 @@
-import * as admin from 'firebase-admin';
-import * as Twit from 'twit';
 import config from '../config';
+import { IAuthReturn } from '../functions/FBFunction';
+import Twitter from '../model/twitter';
 import Intent from './ChuIntent';
 
 interface ITweetParam {
@@ -8,70 +8,23 @@ interface ITweetParam {
   count: number;
 }
 
-interface ITweeturls {
-  url: string;
-  expanded_url: string;
-  indices: number[];
-}
-
-interface ITweetHashtag {
-  text: string;
-  indices: number[];
-}
-
-interface ITweetEntities {
-  hashtags: ITweetHashtag[];
-  urls: ITweeturls[];
-}
-
-interface ITweetStatus {
-  created_at: Date;
-  entities: ITweetEntities;
-  id: number;
-  id_str?: string;
-  text: string;
-  url: string;
-}
-
-interface ITweetData {
-  statuses: ITweetStatus[];
-}
-
-const format = (data: ITweetData): ITweetStatus[] => {
-  return data.statuses.map(({ created_at, entities, id, id_str, text }) => ({
-    created_at,
-    entities,
-    id,
-    text,
-    url: `https://twitter.com/user/status/${id_str}`,
-  }));
-};
-
 export default class Tweet extends Intent {
-  public twit: Twit = null;
+  private twitter: Twitter = null;
   constructor() {
-    super();
-
-    this.twit = new Twit({
-      app_only_auth: true,
-      consumer_key: config.twitter.consumerKey,
-      consumer_secret: config.twitter.consumerSecret,
-      strictSSL: true,
-    });
+    super('tweet');
+    this.twitter = new Twitter();
   }
 
   public async request(
-    _: admin.auth.DecodedIdToken,
-    q: ITweetParam = { term: 'linkedin', count: 50 },
+    _: IAuthReturn,
+    { term, count }: ITweetParam = { term: 'linkedin', count: 50 },
   ) {
     try {
-      const result = await this.twit.get('search/tweets', {
-        count: q.count,
-        q: q.term,
-      });
+      const tweets = await this.twitter.search(term, count);
 
-      return format(result.data as ITweetData);
-    } catch (err) {
+      return tweets;
+    } catch (e) {
+      console.error({ e, term, count }, 'error while getting tweets');
       return null;
     }
   }

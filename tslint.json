@@ -16,7 +16,8 @@
       "allow-pascal-case"
     ],
     "object-literal-sort-keys": [true, "shorthand-first"],
-    "object-shorthand-properties-first": false
+    "object-shorthand-properties-first": false,
+    "no-console": false
   },
   "rulesDirectory": []
 }
