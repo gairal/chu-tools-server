@@ -19,7 +19,7 @@ interface ITweetEntities {
 }
 
 interface ITweetStatus {
-  created_at: Date;
+  created_at: string;
   entities: ITweetEntities;
   id: string;
   id_str?: string;
@@ -32,6 +32,16 @@ interface ITweetData {
 }
 
 export default class Twitter {
+  public static format = (data: ITweetStatus[]): ITweetStatus[] => {
+    return data.map(({ created_at, entities, id_str, text }) => ({
+      created_at,
+      entities,
+      text,
+      id: id_str,
+      url: `https://twitter.com/user/status/${id_str}`,
+    }));
+  };
+
   private twit: Twit = null;
   constructor() {
     this.twit = new Twit({
@@ -42,23 +52,13 @@ export default class Twitter {
     });
   }
 
-  public format = (data: ITweetStatus[]): ITweetStatus[] => {
-    return data.map(({ created_at, entities, id_str, text }) => ({
-      created_at,
-      entities,
-      text,
-      id: id_str,
-      url: `https://twitter.com/user/status/${id_str}`,
-    }));
-  };
-
   public async get(ids: string[]) {
     try {
       const result = await this.twit.get('statuses/lookup', {
         id: ids.join(','),
       });
 
-      return this.format(result.data as ITweetStatus[]);
+      return Twitter.format(result.data as ITweetStatus[]);
     } catch (e) {
       const reason = new Error('failed searching tweets');
       reason.stack += `\nCaused By:\n ${e.stack}`;
@@ -73,7 +73,7 @@ export default class Twitter {
         q: term,
       });
 
-      return this.format((result.data as ITweetData)
+      return Twitter.format((result.data as ITweetData)
         .statuses as ITweetStatus[]);
     } catch (e) {
       const reason = new Error('failed searching tweets');

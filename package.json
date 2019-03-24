@@ -5,7 +5,7 @@
     "build": "tsc",
     "serve": "npm run build && npx firebase serve --only functions --project com-gairal-chools",
     "shell": "npm run build && npx firebase functions:shell --project com-gairal-chools",
-    "start": "npm run shell",
+    "start": "npm run debug",
     "deploy": "npx firebase deploy --only functions --project com-gairal-chools",
     "dev": "node --inspect -r ts-node/register ./src/fastify.ts",
     "debug": "./node_modules/.bin/nodemon",

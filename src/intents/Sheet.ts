@@ -40,28 +40,7 @@ interface ISheetParam {
 }
 
 export default class Sheet extends Intent {
-  private apiKey: string = null;
-  private sheetId: string = null;
-  private sheets: sheets_v4.Sheets = null;
-  private jwtClient: JWT = null;
-  private twitter: Twitter = null;
-  constructor() {
-    super('sheet');
-
-    this.apiKey = config.sheet.apiKey;
-    this.sheetId = config.sheet.id;
-    this.sheets = google.sheets({ version: 'v4' });
-    this.jwtClient = new google.auth.JWT({
-      email: config.sheet.email,
-      // key: creds.private_key,
-      key: config.sheet.privateKey,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
-
-    this.twitter = new Twitter();
-  }
-
-  public format = (data: ISheetData): ISheetReturn => {
+  public static format = (data: ISheetData): ISheetReturn => {
     const {
       statusText,
       data: {
@@ -85,28 +64,7 @@ export default class Sheet extends Intent {
     };
   };
 
-  public async request(auth: IAuthReturn, ids: ISheetParam) {
-    try {
-      const values = await this.getOrderedTweets(ids);
-
-      await this.jwtClient.authorize();
-      const result = await this.sheets.spreadsheets.values.append({
-        auth: this.jwtClient,
-        key: this.apiKey,
-        range: 'A1',
-        requestBody: { values },
-        spreadsheetId: this.sheetId,
-        valueInputOption: 'RAW',
-      });
-
-      return this.format(result as ISheetData);
-    } catch (e) {
-      console.error({ e, auth, ids }, 'error while saving to GSheet');
-      return null;
-    }
-  }
-
-  private parseIds(ids: ISheetParam) {
+  private static parseIds(ids: ISheetParam) {
     const { negative, neutral, positive } = ids;
     const negatives = negative.split(',');
     const positives = positive.split(',');
@@ -133,14 +91,78 @@ export default class Sheet extends Intent {
     };
   }
 
+  private static formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const mm = date.getMonth() + 1; // getMonth() is zero-based
+    const dd = date.getDate();
+
+    return [
+      date.getFullYear(),
+      (mm > 9 ? '' : '0') + mm,
+      (dd > 9 ? '' : '0') + dd,
+    ].join('/');
+  };
+
+  private apiKey: string = null;
+  private sheetId: string = null;
+  private sheets: sheets_v4.Sheets = null;
+  private jwtClient: JWT = null;
+  private twitter: Twitter = null;
+  constructor() {
+    super('sheet');
+
+    this.apiKey = config.sheet.apiKey;
+    this.sheetId = config.sheet.id;
+    this.sheets = google.sheets({ version: 'v4' });
+    this.jwtClient = new google.auth.JWT({
+      email: config.sheet.email,
+      // key: creds.private_key,
+      key: config.sheet.privateKey,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+
+    this.twitter = new Twitter();
+  }
+
+  public async request(auth: IAuthReturn, ids: ISheetParam) {
+    try {
+      const values = await this.getOrderedTweets(ids);
+
+      await this.jwtClient.authorize();
+      const result = await this.sheets.spreadsheets.values.append({
+        auth: this.jwtClient,
+        key: this.apiKey,
+        range: 'A1',
+        requestBody: { values },
+        spreadsheetId: this.sheetId,
+        valueInputOption: 'USER_ENTERED',
+      });
+
+      return Sheet.format(result as ISheetData);
+    } catch (e) {
+      console.error({ e, auth, ids }, 'error while saving to GSheet');
+      return null;
+    }
+  }
+
   private getOrderedTweets = async (ids: ISheetParam) => {
     try {
-      const { flattened, normalized } = this.parseIds(ids);
+      const { flattened, normalized } = Sheet.parseIds(ids);
 
       const tweets = await this.twitter.get(flattened);
 
       const ordered = tweets.reduce(
-        (rows, { id, text }) => rows.concat([[text, normalized[id]]]),
+        (rows, { created_at, id, text, url }) =>
+          rows.concat([
+            [
+              Sheet.formatDate(created_at),
+              text,
+              null,
+              normalized[id],
+              null,
+              url,
+            ],
+          ]),
         [],
       );
 
