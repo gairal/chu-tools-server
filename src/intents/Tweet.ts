@@ -1,4 +1,3 @@
-import config from '../config';
 import { IAuthReturn } from '../functions/FBFunction';
 import Twitter from '../model/twitter';
 import Intent from './ChuIntent';

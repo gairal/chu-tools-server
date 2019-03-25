@@ -1,3 +1,4 @@
+import * as admin from 'firebase-admin';
 import { JWT } from 'google-auth-library';
 import { google, sheets_v4 } from 'googleapis';
 
@@ -77,7 +78,7 @@ export default class Sheet extends Intent {
   private apiKey: string = null;
   private sheets: sheets_v4.Sheets = null;
   private jwtClient: JWT = null;
-  private twitter: Twitter = null;
+  private db: FirebaseFirestore.Firestore = null;
   constructor() {
     super('sheet');
 
@@ -89,16 +90,16 @@ export default class Sheet extends Intent {
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
-    this.twitter = new Twitter();
+    this.db = admin.firestore();
   }
 
   public async request(
     auth: IAuthReturn,
     params: ISheetParam,
-    body: ITweetStatus[],
+    tweets: ITweetStatus[],
   ) {
     try {
-      const values = await this.getOrderedTweets(body);
+      const values = await this.getOrderedTweets(tweets);
 
       await this.jwtClient.authorize();
       const result = await this.sheets.spreadsheets.values.append({
@@ -110,12 +111,35 @@ export default class Sheet extends Intent {
         valueInputOption: 'USER_ENTERED',
       });
 
+      await this.persisteSaved(tweets);
+
       return Sheet.format(result as ISheetData);
     } catch (e) {
       console.error({ e, auth, params }, 'error while saving to GSheet');
       return null;
     }
   }
+
+  private persisteSaved = async (tweets: ITweetStatus[]) => {
+    const tweetsIds = tweets.map(t => t.id);
+
+    try {
+      const batch = this.db.batch();
+      const collection = this.db.collection('savedTweets');
+      tweetsIds.forEach(id => {
+        const doc = collection.doc();
+        batch.set(doc, { id });
+      });
+
+      await batch.commit();
+
+      return tweetsIds;
+    } catch (e) {
+      const reason = new Error('failed peristing saved tweets');
+      reason.stack += `\nCaused By:\n ${e.stack}`;
+      throw reason;
+    }
+  };
 
   private getOrderedTweets = async (tweets: ITweetStatus[]) => {
     try {
