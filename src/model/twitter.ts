@@ -44,8 +44,8 @@ export default class Twitter {
         entities,
         lang,
         retweet_count,
-        text: full_text,
         id: id_str,
+        text: full_text,
         url: `https://twitter.com/user/status/${id_str}`,
       }),
     );
@@ -79,8 +79,8 @@ export default class Twitter {
     try {
       const result = await this.twit.get('search/tweets', {
         count,
-        tweet_mode: 'extended',
         q: term,
+        tweet_mode: 'extended',
       });
 
       return Twitter.format((result.data as ITweetData)
