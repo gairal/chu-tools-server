@@ -127,15 +127,15 @@ export default class Sheet extends Intent {
       const batch = this.db.batch();
       const collection = this.db.collection('savedTweets');
       tweetsIds.forEach(id => {
-        const doc = collection.doc();
-        batch.set(doc, { id });
+        const doc = collection.doc(id);
+        batch.set(doc, {});
       });
 
       await batch.commit();
 
       return tweetsIds;
     } catch (e) {
-      const reason = new Error('failed peristing saved tweets');
+      const reason = new Error('failed persisting saved tweets');
       reason.stack += `\nCaused By:\n ${e.stack}`;
       throw reason;
     }

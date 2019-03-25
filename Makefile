@@ -32,3 +32,8 @@ serve:
 .PHONY: debug
 debug:
 	npm run debug
+
+.PHONY: logs
+logs:
+	npx firebase functions:log --project com-gairal-chools
+
