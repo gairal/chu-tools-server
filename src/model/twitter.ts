@@ -24,6 +24,7 @@ export interface ITweetStatus {
   id: string;
   id_str?: string;
   text: string;
+  full_text?: string;
   url: string;
   retweet_count: number;
   lang: string;
@@ -38,12 +39,12 @@ interface ITweetData {
 export default class Twitter {
   public static format = (data: ITweetStatus[]): ITweetStatus[] => {
     return data.map(
-      ({ created_at, entities, id_str, lang, text, retweet_count }) => ({
+      ({ created_at, entities, id_str, lang, full_text, retweet_count }) => ({
         created_at,
         entities,
         lang,
         retweet_count,
-        text,
+        text: full_text,
         id: id_str,
         url: `https://twitter.com/user/status/${id_str}`,
       }),
@@ -78,6 +79,7 @@ export default class Twitter {
     try {
       const result = await this.twit.get('search/tweets', {
         count,
+        tweet_mode: 'extended',
         q: term,
       });
 
