@@ -33,5 +33,6 @@ export default abstract class Intent implements IIntent {
   public abstract async request(
     auth: IAuthReturn,
     query?: functions.Request['query'],
+    body?: functions.Request['body'],
   ): Promise<any>;
 }

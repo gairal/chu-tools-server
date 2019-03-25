@@ -16,6 +16,7 @@
   "dependencies": {
     "@google-cloud/logging": "4.5.1",
     "axios": "^0.18",
+    "body-parser": "^1.18.3",
     "cors": "^2.8",
     "dotenv": "^7.0",
     "firebase-admin": "^7.1",

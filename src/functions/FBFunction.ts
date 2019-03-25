@@ -1,7 +1,9 @@
+import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 
+import { NextHandleFunction } from 'connect';
 import config from '../config';
 import Intent, { IIntent } from '../intents/ChuIntent';
 
@@ -34,6 +36,7 @@ export default abstract class FBFunction implements IFunction, IIntent {
 
   protected intent: Intent = null;
   private corsMiddelware = null;
+  private bodyParserMiddleware: NextHandleFunction = null;
   constructor(intent?: new () => Intent) {
     this.intent = intent ? new intent() : null;
     this.corsMiddelware = cors({
@@ -51,6 +54,8 @@ export default abstract class FBFunction implements IFunction, IIntent {
         }
       },
     });
+
+    this.bodyParserMiddleware = bodyParser.json();
   }
 
   /**
@@ -61,17 +66,20 @@ export default abstract class FBFunction implements IFunction, IIntent {
    */
   public init(): functions.HttpsFunction {
     return functions.https.onRequest((req, res) =>
-      this.cors(req, res).then((ret: ICorsReturn) =>
-        this.onRequest(ret.req, ret.res),
-      ),
+      this.cors(req, res)
+        .then(() => this.bodyParser(req, res))
+        .then((ret: ICorsReturn) => {
+          return this.onRequest(ret.req, ret.res);
+        }),
     );
   }
 
   public async request(
     auth: IAuthReturn,
     query?: functions.Request['query'],
+    body?: functions.Request['body'],
   ): Promise<any> {
-    return this.intent.request(auth, query);
+    return this.intent.request(auth, query, body);
   }
 
   public async validateFirebaseIdToken(
@@ -107,7 +115,7 @@ export default abstract class FBFunction implements IFunction, IIntent {
   protected async onRequest(req: functions.Request, res: functions.Response) {
     try {
       const authReturn: IAuthReturn = await this.validateFirebaseIdToken(req);
-      const data = await this.request(authReturn, req.query);
+      const data = await this.request(authReturn, req.query, req.body);
       res.send(data);
     } catch (err) {
       console.error(err);
@@ -128,6 +136,14 @@ export default abstract class FBFunction implements IFunction, IIntent {
   private cors(req: functions.Request, res: functions.Response) {
     return new Promise(resolve => {
       this.corsMiddelware(req, res, () => {
+        resolve({ req, res });
+      });
+    });
+  }
+
+  private bodyParser(req: functions.Request, res: functions.Response) {
+    return new Promise(resolve => {
+      this.bodyParserMiddleware(req, res, () => {
         resolve({ req, res });
       });
     });

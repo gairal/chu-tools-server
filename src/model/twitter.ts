@@ -18,7 +18,14 @@ interface ITweetEntities {
   urls: ITweeturls[];
 }
 
-interface ITweetStatus {
+export enum Sentiment {
+  Unorder = 'unorder',
+  Positive = 'positive',
+  Negative = 'negative',
+  Neutral = 'neutral',
+}
+
+export interface ITweetStatus {
   created_at: string;
   entities: ITweetEntities;
   id: string;
@@ -27,6 +34,8 @@ interface ITweetStatus {
   url: string;
   retweet_count: number;
   lang: string;
+  sentiment?: Sentiment;
+  category?: string;
 }
 
 interface ITweetData {

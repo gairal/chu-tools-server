@@ -3,7 +3,7 @@ import { google, sheets_v4 } from 'googleapis';
 
 import config from '../config';
 import { IAuthReturn } from '../functions/FBFunction';
-import Twitter from '../model/twitter';
+import Twitter, { ITweetStatus } from '../model/twitter';
 import Intent from './ChuIntent';
 
 interface ISheetDataDataUpdates {
@@ -34,9 +34,6 @@ interface ISheetReturn {
 }
 
 interface ISheetParam {
-  positive: string;
-  negative: string;
-  neutral: string;
   spreadsheetId: string;
 }
 
@@ -64,33 +61,6 @@ export default class Sheet extends Intent {
       status: statusText,
     };
   };
-
-  private static parseIds(ids: ISheetParam) {
-    const { negative, neutral, positive } = ids;
-    const negatives = negative.split(',');
-    const positives = positive.split(',');
-    const neutrals = neutral.split(',');
-
-    const flattenedMap = new Set([...negatives, ...positives, ...neutrals]);
-    const flattened = [...flattenedMap.values()];
-
-    const normalized = flattened.reduce((tweetIds, id) => {
-      if (negative.includes(id)) {
-        tweetIds[id] = 'negative';
-      } else if (positives.includes(id)) {
-        tweetIds[id] = 'positive';
-      } else {
-        tweetIds[id] = 'neutral';
-      }
-
-      return tweetIds;
-    }, {});
-
-    return {
-      flattened,
-      normalized,
-    };
-  }
 
   private static formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -122,9 +92,13 @@ export default class Sheet extends Intent {
     this.twitter = new Twitter();
   }
 
-  public async request(auth: IAuthReturn, params: ISheetParam) {
+  public async request(
+    auth: IAuthReturn,
+    params: ISheetParam,
+    body: ITweetStatus[],
+  ) {
     try {
-      const values = await this.getOrderedTweets(params);
+      const values = await this.getOrderedTweets(body);
 
       await this.jwtClient.authorize();
       const result = await this.sheets.spreadsheets.values.append({
@@ -143,22 +117,18 @@ export default class Sheet extends Intent {
     }
   }
 
-  private getOrderedTweets = async (ids: ISheetParam) => {
+  private getOrderedTweets = async (tweets: ITweetStatus[]) => {
     try {
-      const { flattened, normalized } = Sheet.parseIds(ids);
-
-      const tweets = await this.twitter.get(flattened);
-
       const ordered = tweets.reduce(
-        (rows, { created_at, id, text, url }) =>
+        (rows, { created_at, id, text, url, category, sentiment }) =>
           rows.concat([
             [
               id,
               Sheet.formatDate(created_at),
               text,
               null,
-              normalized[id],
-              null,
+              sentiment,
+              category,
               url,
             ],
           ]),
