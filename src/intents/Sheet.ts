@@ -130,7 +130,7 @@ export default class Sheet extends Intent {
     try {
       const mapping = [];
       const tweetsByLanguages = tweets
-        .filter(t => t.lang !== 'en')
+        .filter(t => t.lang !== 'en' && t.lang !== 'und')
         .reduce((acc, t) => {
           if (!mapping.includes(t.lang)) {
             mapping.push(t.lang);
@@ -166,7 +166,9 @@ export default class Sheet extends Intent {
         return acc.concat(lang);
       }, []);
 
-      return tweets.filter(t => t.lang === 'en').concat(ret);
+      return tweets
+        .filter(t => t.lang === 'en' || t.lang === 'und')
+        .concat(ret);
     } catch (e) {
       const reason = new Error('failed translating tweets');
       reason.stack += `\nCaused By:\n ${e.stack}`;
