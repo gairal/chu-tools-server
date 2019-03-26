@@ -131,7 +131,7 @@ export default class Sheet extends Intent {
     try {
       const splitTweets = tweets.reduce(
         (acc, t) => {
-          if (t.lang === 'en' || t.lang === 'und' || !!t.translation) {
+          if (['en', 'und'].includes(t.lang) || !!t.translation) {
             acc.untranslatable.push(t);
           } else {
             acc.translatable.push(t);
