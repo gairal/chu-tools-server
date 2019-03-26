@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin';
 import { JWT } from 'google-auth-library';
 import { google, sheets_v4, translate_v2 } from 'googleapis';
 
+import { GaxiosResponse } from 'gaxios';
 import config from '../config';
 import { IAuthReturn } from '../functions/FBFunction';
 import { ITweetStatus } from '../model/twitter';
@@ -128,21 +129,35 @@ export default class Sheet extends Intent {
 
   private translateTweets = async (tweets: ITweetStatus[]) => {
     try {
-      const mapping = [];
-      const tweetsByLanguages = tweets
-        .filter(t => t.lang !== 'en' && t.lang !== 'und')
-        .reduce((acc, t) => {
-          if (!mapping.includes(t.lang)) {
-            mapping.push(t.lang);
-            acc[mapping.indexOf(t.lang)] = [];
+      const splitTweets = tweets.reduce(
+        (acc, t) => {
+          if (t.lang === 'en' || t.lang === 'und' || !!t.translation) {
+            acc.untranslatable.push(t);
+          } else {
+            acc.translatable.push(t);
           }
 
-          acc[mapping.indexOf(t.lang)].push(t);
           return acc;
-        }, []);
+        },
+        { translatable: [], untranslatable: [] },
+      );
 
-      const promises = tweetsByLanguages.map((v, i) => {
-        return this.translate.translations.translate({
+      const mapping = [];
+      const tweetsByLanguages = splitTweets.translatable.reduce((acc, t) => {
+        if (!mapping.includes(t.lang)) {
+          mapping.push(t.lang);
+          acc[mapping.indexOf(t.lang)] = [];
+        }
+
+        acc[mapping.indexOf(t.lang)].push(t);
+        return acc;
+      }, []);
+
+      // tslint:disable-next-line:array-type
+      const promises: Promise<
+        GaxiosResponse<translate_v2.Schema$TranslationsListResponse>
+      >[] = tweetsByLanguages.map((v: ITweetStatus[], i: number) =>
+        this.translate.translations.translate({
           auth: this.jwtClient,
           requestBody: {
             format: 'text',
@@ -150,8 +165,8 @@ export default class Sheet extends Intent {
             source: mapping[i],
             target: 'en',
           },
-        });
-      });
+        }),
+      );
 
       const res = await Promise.all(promises);
 
@@ -166,9 +181,7 @@ export default class Sheet extends Intent {
         return acc.concat(lang);
       }, []);
 
-      return tweets
-        .filter(t => t.lang === 'en' || t.lang === 'und')
-        .concat(ret);
+      return splitTweets.untranslatable.concat(ret);
     } catch (e) {
       const reason = new Error('failed translating tweets');
       reason.stack += `\nCaused By:\n ${e.stack}`;
