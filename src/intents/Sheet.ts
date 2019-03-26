@@ -1,30 +1,12 @@
 import * as admin from 'firebase-admin';
-import { JWT } from 'google-auth-library';
-import { google, sheets_v4, translate_v2 } from 'googleapis';
-
 import { GaxiosResponse } from 'gaxios';
-import config from '../config';
+import { sheets_v4, translate_v2 } from 'googleapis';
+
 import { IAuthReturn } from '../functions/FBFunction';
+import SheetWriter, { ISheetData } from '../model/SheetWriter';
+import Translator from '../model/Translator';
 import { ITweetStatus } from '../model/twitter';
 import Intent from './ChuIntent';
-
-interface ISheetDataDataUpdates {
-  spreadsheetId: string;
-  updatedRange: string;
-  updatedRows: number;
-  updatedColumns: number;
-  updatedCells: number;
-}
-
-interface ISheetDataData {
-  updates: ISheetDataDataUpdates;
-}
-
-interface ISheetData {
-  status: number;
-  statusText: string;
-  data: ISheetDataData;
-}
 
 interface ISheetReturn {
   id: string;
@@ -76,25 +58,14 @@ export default class Sheet extends Intent {
     ].join('/');
   };
 
-  private apiKey: string = null;
-  private sheets: sheets_v4.Sheets = null;
-  private translate: translate_v2.Translate = null;
-  private jwtClient: JWT = null;
+  private sheetWriter: SheetWriter = null;
+  private translator: Translator = null;
   private db: FirebaseFirestore.Firestore = null;
   constructor() {
     super('sheet');
 
-    this.apiKey = config.sheet.apiKey;
-    this.sheets = google.sheets({ version: 'v4' });
-    this.translate = google.translate({ version: 'v2' });
-    this.jwtClient = new google.auth.JWT({
-      email: config.sheet.email,
-      key: config.sheet.privateKey,
-      scopes: [
-        'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/cloud-translation',
-      ],
-    });
+    this.sheetWriter = new SheetWriter();
+    this.translator = new Translator();
 
     this.db = admin.firestore();
   }
@@ -108,17 +79,9 @@ export default class Sheet extends Intent {
       const translatedTweets = await this.translateTweets(tweets);
       const values = await this.getOrderedTweets(translatedTweets);
 
-      await this.jwtClient.authorize();
-      const result = await this.sheets.spreadsheets.values.append({
-        auth: this.jwtClient,
-        key: this.apiKey,
-        range: 'A1',
-        requestBody: { values },
-        spreadsheetId: params.spreadsheetId,
-        valueInputOption: 'USER_ENTERED',
-      });
+      const result = await this.sheetWriter.write(params.spreadsheetId, values);
 
-      await this.persisteSaved(tweets);
+      // await this.persisteSaved(tweets);
 
       return Sheet.format(result as ISheetData);
     } catch (e) {
@@ -155,28 +118,20 @@ export default class Sheet extends Intent {
 
       // tslint:disable-next-line:array-type
       const promises: Promise<
-        GaxiosResponse<translate_v2.Schema$TranslationsListResponse>
+        translate_v2.Schema$TranslationsResource[]
       >[] = tweetsByLanguages.map((v: ITweetStatus[], i: number) =>
-        this.translate.translations.translate({
-          auth: this.jwtClient,
-          requestBody: {
-            format: 'text',
-            q: v.map((t: ITweetStatus) => t.text),
-            source: mapping[i],
-            target: 'en',
-          },
-        }),
+        this.translator.translate(
+          mapping[i],
+          v.map((t: ITweetStatus) => t.text),
+        ),
       );
 
       const res = await Promise.all(promises);
 
       const ret = tweetsByLanguages.reduce((acc, lang: ITweetStatus[], i) => {
         lang.forEach((t, j) => {
-          const currLang = res[i].data as any;
           // add the translation to the tweets
-          t.translation = (currLang.data as translate_v2.Schema$TranslationsListResponse).translations[
-            j
-          ].translatedText;
+          t.translation = res[i][j].translatedText;
         });
         return acc.concat(lang);
       }, []);
@@ -210,9 +165,11 @@ export default class Sheet extends Intent {
     }
   };
 
-  private getOrderedTweets = async (tweets: ITweetStatus[]) => {
+  private getOrderedTweets = (
+    tweets: ITweetStatus[],
+  ): sheets_v4.Schema$ValueRange => {
     try {
-      const ordered = tweets.reduce(
+      const values = tweets.reduce(
         (
           rows,
           { created_at, id, text, url, category, sentiment, translation },
@@ -231,7 +188,7 @@ export default class Sheet extends Intent {
         [],
       );
 
-      return ordered;
+      return { values };
     } catch (e) {
       const reason = new Error('failed searching tweets');
       reason.stack += `\nCaused By:\n ${e.stack}`;

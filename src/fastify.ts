@@ -5,6 +5,7 @@ import { IncomingMessage } from 'http';
 
 import Auth from './functions/Auth';
 import Sheets from './functions/Sheets';
+import Translates from './functions/Translates';
 import Tweets from './functions/Tweets';
 
 admin.initializeApp();
@@ -51,6 +52,10 @@ fast.get('/auth', async request => {
 
 fast.get('/tweets', async request => {
   return route(request, Tweets, request.query as { q: string });
+});
+
+fast.get('/translates', async request => {
+  return route(request, Translates, request.query as { q: string });
 });
 
 fast.post('/sheets', async request => {
