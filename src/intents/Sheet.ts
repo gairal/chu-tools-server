@@ -1,5 +1,4 @@
 import * as admin from 'firebase-admin';
-import { GaxiosResponse } from 'gaxios';
 import { sheets_v4, translate_v2 } from 'googleapis';
 
 import { IAuthReturn } from '../functions/FBFunction';
@@ -81,7 +80,7 @@ export default class Sheet extends Intent {
 
       const result = await this.sheetWriter.write(params.spreadsheetId, values);
 
-      // await this.persisteSaved(tweets);
+      await this.persisteSaved(tweets);
 
       return Sheet.format(result as ISheetData);
     } catch (e) {
