@@ -30,6 +30,7 @@ export interface ITweetStatus {
   lang: string;
   sentiment?: string;
   category?: string;
+  translation?: string;
 }
 
 interface ITweetData {

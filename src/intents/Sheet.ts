@@ -1,10 +1,10 @@
 import * as admin from 'firebase-admin';
 import { JWT } from 'google-auth-library';
-import { google, sheets_v4 } from 'googleapis';
+import { google, sheets_v4, translate_v2 } from 'googleapis';
 
 import config from '../config';
 import { IAuthReturn } from '../functions/FBFunction';
-import Twitter, { ITweetStatus } from '../model/twitter';
+import { ITweetStatus } from '../model/twitter';
 import Intent from './ChuIntent';
 
 interface ISheetDataDataUpdates {
@@ -77,6 +77,7 @@ export default class Sheet extends Intent {
 
   private apiKey: string = null;
   private sheets: sheets_v4.Sheets = null;
+  private translate: translate_v2.Translate = null;
   private jwtClient: JWT = null;
   private db: FirebaseFirestore.Firestore = null;
   constructor() {
@@ -84,10 +85,14 @@ export default class Sheet extends Intent {
 
     this.apiKey = config.sheet.apiKey;
     this.sheets = google.sheets({ version: 'v4' });
+    this.translate = google.translate({ version: 'v2' });
     this.jwtClient = new google.auth.JWT({
       email: config.sheet.email,
       key: config.sheet.privateKey,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      scopes: [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/cloud-translation',
+      ],
     });
 
     this.db = admin.firestore();
@@ -99,7 +104,8 @@ export default class Sheet extends Intent {
     tweets: ITweetStatus[],
   ) {
     try {
-      const values = await this.getOrderedTweets(tweets);
+      const translatedTweets = await this.translateTweets(tweets);
+      const values = await this.getOrderedTweets(translatedTweets);
 
       await this.jwtClient.authorize();
       const result = await this.sheets.spreadsheets.values.append({
@@ -119,6 +125,54 @@ export default class Sheet extends Intent {
       return null;
     }
   }
+
+  private translateTweets = async (tweets: ITweetStatus[]) => {
+    try {
+      const mapping = [];
+      const tweetsByLanguages = tweets
+        .filter(t => t.lang !== 'en')
+        .reduce((acc, t) => {
+          if (!mapping.includes(t.lang)) {
+            mapping.push(t.lang);
+            acc[mapping.indexOf(t.lang)] = [];
+          }
+
+          acc[mapping.indexOf(t.lang)].push(t);
+          return acc;
+        }, []);
+
+      const promises = tweetsByLanguages.map((v, i) => {
+        return this.translate.translations.translate({
+          auth: this.jwtClient,
+          requestBody: {
+            format: 'text',
+            q: v.map((t: ITweetStatus) => t.text),
+            source: mapping[i],
+            target: 'en',
+          },
+        });
+      });
+
+      const res = await Promise.all(promises);
+
+      const ret = tweetsByLanguages.reduce((acc, lang: ITweetStatus[], i) => {
+        lang.forEach((t, j) => {
+          const currLang = res[i].data as any;
+          // add the translation to the tweets
+          t.translation = (currLang.data as translate_v2.Schema$TranslationsListResponse).translations[
+            j
+          ].translatedText;
+        });
+        return acc.concat(lang);
+      }, []);
+
+      return tweets.filter(t => t.lang === 'en').concat(ret);
+    } catch (e) {
+      const reason = new Error('failed translating tweets');
+      reason.stack += `\nCaused By:\n ${e.stack}`;
+      throw reason;
+    }
+  };
 
   private persisteSaved = async (tweets: ITweetStatus[]) => {
     const tweetsIds = tweets.map(t => t.id);
@@ -144,13 +198,16 @@ export default class Sheet extends Intent {
   private getOrderedTweets = async (tweets: ITweetStatus[]) => {
     try {
       const ordered = tweets.reduce(
-        (rows, { created_at, id, text, url, category, sentiment }) =>
+        (
+          rows,
+          { created_at, id, text, url, category, sentiment, translation },
+        ) =>
           rows.concat([
             [
               id,
               Sheet.formatDate(created_at),
               text,
-              null,
+              translation,
               sentiment,
               category,
               url,
