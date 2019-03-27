@@ -81,6 +81,7 @@ export default class Twitter {
       const result = await this.twit.get('search/tweets', {
         count,
         q: term,
+        result_type: 'recent',
         tweet_mode: 'extended',
       });
 
