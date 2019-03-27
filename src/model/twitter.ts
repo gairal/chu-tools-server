@@ -76,10 +76,11 @@ export default class Twitter {
     }
   }
 
-  public async search(term: string, count: number = 50) {
+  public async search(term: string, count: number = 50, maxId) {
     try {
       const result = await this.twit.get('search/tweets', {
         count,
+        max_id: maxId,
         q: term,
         result_type: 'recent',
         tweet_mode: 'extended',

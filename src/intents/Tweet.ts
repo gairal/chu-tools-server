@@ -3,8 +3,9 @@ import Twitter from '../model/twitter';
 import Intent from './ChuIntent';
 
 interface ITweetParam {
-  term: string;
   count: number;
+  max_id?: string;
+  term: string;
 }
 
 export default class Tweet extends Intent {
@@ -16,14 +17,14 @@ export default class Tweet extends Intent {
 
   public async request(
     _: IAuthReturn,
-    { term, count }: ITweetParam = { term: 'linkedin', count: 50 },
+    { term, count, max_id }: ITweetParam = { term: 'linkedin', count: 50 },
   ) {
     try {
-      const tweets = await this.twitter.search(term, count);
+      const tweets = await this.twitter.search(term, count, max_id);
 
       return tweets;
     } catch (e) {
-      console.error({ e, term, count }, 'error while getting tweets');
+      console.error({ e, term, count, max_id }, 'error while getting tweets');
       return null;
     }
   }
