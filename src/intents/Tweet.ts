@@ -1,5 +1,5 @@
 import { IAuthReturn } from '../functions/FBFunction';
-import Twitter from '../model/twitter';
+import Twitter from '../model/Twitter';
 import Intent from './ChuIntent';
 
 interface ITweetParam {
