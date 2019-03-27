@@ -24,6 +24,7 @@ export interface ITweetStatus {
   id: number;
   id_str?: string;
   text: string;
+  hidden?: boolean;
   full_text?: string;
   url: string;
   retweet_count: number;

@@ -1,5 +1,4 @@
-import * as admin from 'firebase-admin';
-
+import TrashClient from '../clients/Trash';
 import { IAuthReturn } from '../functions/FBFunction';
 import Intent from './ChuIntent';
 
@@ -9,10 +8,10 @@ interface ITrashParam {
 }
 
 export default class Trash extends Intent {
-  private db: FirebaseFirestore.Firestore = null;
+  private trash: TrashClient = null;
   constructor() {
     super('trash');
-    this.db = admin.firestore();
+    this.trash = new TrashClient();
   }
 
   public async request(
@@ -26,15 +25,9 @@ export default class Trash extends Intent {
     try {
       let res: FirebaseFirestore.WriteResult;
       if (!isUntrash) {
-        res = await this.db
-          .collection('trashedTweets')
-          .doc(id)
-          .set({});
+        res = await this.trash.save(id);
       } else {
-        res = await this.db
-          .collection('trashedTweets')
-          .doc(id)
-          .delete();
+        res = await this.trash.delete(id);
       }
 
       return res;
