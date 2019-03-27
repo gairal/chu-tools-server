@@ -3,7 +3,8 @@
 ---
 
 > A handy Twitter tool built with [TypeScript](https://www.typescriptlang.org/),
-> [React](https://reactjs.org/), [Prettier](https://prettier.io/), [eslint](https://eslint.org/), and ❤️
+> [Firebase](https://firebase.google.com/), [Fastify](https://www.fastify.io/),
+> [Prettier](https://prettier.io/), [eslint](https://eslint.org/), and ❤️
 
 ## Motivations
 
@@ -11,7 +12,7 @@ Building a tool to help my wife search product feedbacks on Twitter.
 
 ## Features
 
-See the client side package here https://github.com/gairal/chu-tools-client
+See the client side package here [chu-tools-client](https://github.com/gairal/chu-tools-client)
 
 This package is a serverless backend built on top of Firebase Functions (gCloud Functions). It exposes 3 endpoints:
 
