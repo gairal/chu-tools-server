@@ -4,7 +4,7 @@ import { sheets_v4, translate_v2 } from 'googleapis';
 import { IAuthReturn } from '../functions/FBFunction';
 import SheetWriter, { ISheetData } from '../model/SheetWriter';
 import Translator from '../model/Translator';
-import { ITweetStatus } from '../model/twitter';
+import { ITweetStatus } from '../model/Twitter';
 import Intent from './ChuIntent';
 
 interface ISheetReturn {
