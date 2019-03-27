@@ -10,9 +10,6 @@ const config = {
     'unkrich.kristine@gmail.com',
     'frank@autofi.io',
   ],
-  // google: {
-  //   apiKey: fbConfig.google ? fbConfig.google.key : process.env.GOOGLE_KEY,
-  // },
   logging: new Logging(),
   sheet: {
     apiKey: fbConfig.sheet ? fbConfig.sheet.key : process.env.SHEET_KEY,
