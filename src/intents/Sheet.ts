@@ -144,7 +144,7 @@ export default class Sheet extends Intent {
   };
 
   private persisteSaved = async (tweets: ITweetStatus[]) => {
-    const tweetsIds = tweets.map(t => t.id);
+    const tweetsIds = tweets.map(t => t.id_str);
 
     try {
       const batch = this.db.batch();
@@ -171,11 +171,11 @@ export default class Sheet extends Intent {
       const values = tweets.reduce(
         (
           rows,
-          { created_at, id, text, url, category, sentiment, translation },
+          { created_at, id_str, text, url, category, sentiment, translation },
         ) =>
           rows.concat([
             [
-              id,
+              id_str,
               Sheet.formatDate(created_at),
               text,
               translation,
