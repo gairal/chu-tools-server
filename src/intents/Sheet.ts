@@ -1,10 +1,10 @@
 import * as admin from 'firebase-admin';
 import { sheets_v4, translate_v2 } from 'googleapis';
 
+import SheetWriter, { ISheetData } from '../clients/SheetWriter';
+import Translator from '../clients/Translator';
+import { ITweetStatus } from '../clients/Twitter';
 import { IAuthReturn } from '../functions/FBFunction';
-import SheetWriter, { ISheetData } from '../model/SheetWriter';
-import Translator from '../model/Translator';
-import { ITweetStatus } from '../model/Twitter';
 import Intent from './ChuIntent';
 
 interface ISheetReturn {

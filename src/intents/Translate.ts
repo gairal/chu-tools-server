@@ -1,5 +1,5 @@
+import Translator from '../clients/Translator';
 import { IAuthReturn } from '../functions/FBFunction';
-import Translator from '../model/Translator';
 import Intent from './ChuIntent';
 
 interface ITranslateParam {
