@@ -23,13 +23,8 @@ export default class Tweet extends Intent {
     { term, count, max_id }: ITweetParam = { term: 'linkedin', count: 50 },
   ) {
     try {
-      const results = await Promise.all([
-        this.twitter.search(term, count, max_id),
-        this.trash.get(),
-      ]);
-
-      const tweets = results[0];
-      const trashedtweets = results[1];
+      const tweets = await this.twitter.search(term, count, max_id);
+      const trashedtweets = await this.trash.get(tweets.map(t => t.id_str));
 
       tweets.forEach(t => {
         if (trashedtweets.includes(t.id_str)) {
