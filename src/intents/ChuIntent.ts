@@ -1,7 +1,4 @@
-import { Log } from '@google-cloud/logging';
-import { AxiosRequestConfig } from 'axios';
 import * as functions from 'firebase-functions';
-import config from '../config';
 import { IAuthReturn } from '../functions/FBFunction';
 
 export interface IIntent {
@@ -10,7 +7,6 @@ export interface IIntent {
 
 export interface IConf {
   api?: string;
-  axios?: AxiosRequestConfig;
 }
 
 export default abstract class Intent implements IIntent {
@@ -24,10 +20,8 @@ export default abstract class Intent implements IIntent {
   }
 
   protected name: string = null;
-  protected log: Log = null;
   constructor(name: string) {
     this.name = name;
-    this.log = config.logging.log(name);
   }
 
   public abstract async request(

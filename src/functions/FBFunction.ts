@@ -4,6 +4,7 @@ import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 
 import { NextHandleFunction } from 'connect';
+import { RequestHandler } from 'express';
 import config from '../config';
 import Intent, { IIntent } from '../intents/ChuIntent';
 
@@ -35,7 +36,7 @@ export default abstract class FBFunction implements IFunction, IIntent {
   }
 
   protected intent: Intent = null;
-  private corsMiddelware = null;
+  private corsMiddelware: RequestHandler = null;
   private bodyParserMiddleware: NextHandleFunction = null;
   constructor(intent?: new () => Intent) {
     this.intent = intent ? new intent() : null;
