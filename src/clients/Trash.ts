@@ -19,7 +19,7 @@ export default class Trash {
         res = all.docs;
       }
 
-      const resultIds: string[] = res.filter(d => !!d && !!d.id).map(d => d.id);
+      const resultIds: string[] = res.filter(d => !!d.data()).map(d => d.id);
 
       return resultIds;
     } catch (e) {

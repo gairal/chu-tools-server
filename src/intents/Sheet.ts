@@ -104,7 +104,7 @@ export default class Sheet extends Intent {
         { translatable: [], untranslatable: [] },
       );
 
-      const mapping = [];
+      const mapping: string[] = [];
       const tweetsByLanguages = splitTweets.translatable.reduce((acc, t) => {
         if (!mapping.includes(t.lang)) {
           mapping.push(t.lang);
@@ -127,7 +127,11 @@ export default class Sheet extends Intent {
 
       const res = await Promise.all(promises);
 
-      const ret = tweetsByLanguages.reduce((acc, lang: ITweetStatus[], i) => {
+      const ret = tweetsByLanguages.reduce((
+        acc: ITweetStatus[],
+        lang: ITweetStatus[],
+        i: number,
+      ) => {
         lang.forEach((t, j) => {
           // add the translation to the tweets
           t.translation = res[i][j].translatedText;

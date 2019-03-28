@@ -2,7 +2,10 @@
   "compilerOptions": {
     "lib": ["es2017"],
     "module": "commonjs",
+    "noImplicitAny": true,
     "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noStrictGenericChecks": true,
     "outDir": "lib",
     "resolveJsonModule": true,
     "sourceMap": true,
