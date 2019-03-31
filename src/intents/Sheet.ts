@@ -3,7 +3,7 @@ import { sheets_v4, translate_v2 } from 'googleapis';
 
 import SheetWriter, { ISheetData } from '../clients/SheetWriter';
 import Translator from '../clients/Translator';
-import { ITweetStatus } from '../clients/Twitter';
+import { ITweet } from '../clients/Twitter';
 import { IAuthReturn } from '../functions/FBFunction';
 import Intent from './ChuIntent';
 
@@ -72,7 +72,7 @@ export default class Sheet extends Intent {
   public async request(
     auth: IAuthReturn,
     params: ISheetParam,
-    tweets: ITweetStatus[],
+    tweets: ITweet[],
   ) {
     try {
       const translatedTweets = await this.translateTweets(tweets);
@@ -89,7 +89,7 @@ export default class Sheet extends Intent {
     }
   }
 
-  private translateTweets = async (tweets: ITweetStatus[]) => {
+  private translateTweets = async (tweets: ITweet[]) => {
     try {
       const splitTweets = tweets.reduce(
         (acc, t) => {
@@ -118,18 +118,15 @@ export default class Sheet extends Intent {
       // tslint:disable-next-line:array-type
       const promises: Promise<
         translate_v2.Schema$TranslationsResource[]
-      >[] = tweetsByLanguages.map((v: ITweetStatus[], i: number) =>
-        this.translator.translate(
-          mapping[i],
-          v.map((t: ITweetStatus) => t.text),
-        ),
+      >[] = tweetsByLanguages.map((v: ITweet[], i: number) =>
+        this.translator.translate(mapping[i], v.map((t: ITweet) => t.text)),
       );
 
       const res = await Promise.all(promises);
 
       const ret = tweetsByLanguages.reduce((
-        acc: ITweetStatus[],
-        lang: ITweetStatus[],
+        acc: ITweet[],
+        lang: ITweet[],
         i: number,
       ) => {
         lang.forEach((t, j) => {
@@ -147,8 +144,8 @@ export default class Sheet extends Intent {
     }
   };
 
-  private persisteSaved = async (tweets: ITweetStatus[]) => {
-    const tweetsIds = tweets.map(t => t.id_str);
+  private persisteSaved = async (tweets: ITweet[]) => {
+    const tweetsIds = tweets.map(t => t.id);
 
     try {
       const batch = this.db.batch();
@@ -169,18 +166,15 @@ export default class Sheet extends Intent {
   };
 
   private getOrderedTweets = (
-    tweets: ITweetStatus[],
+    tweets: ITweet[],
   ): sheets_v4.Schema$ValueRange => {
     try {
       const values = tweets.reduce(
-        (
-          rows,
-          { created_at, id_str, text, url, category, sentiment, translation },
-        ) =>
+        (rows, { created, id, text, url, category, sentiment, translation }) =>
           rows.concat([
             [
-              id_str,
-              Sheet.formatDate(created_at),
+              id,
+              Sheet.formatDate(created),
               text,
               translation,
               sentiment,

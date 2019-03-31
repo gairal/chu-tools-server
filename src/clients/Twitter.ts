@@ -1,6 +1,7 @@
 import * as Twit from 'twit';
 
 import config from '../config';
+import { IPost, PostType } from '../types';
 
 interface ITweeturls {
   url: string;
@@ -18,45 +19,28 @@ interface ITweetEntities {
   urls: ITweeturls[];
 }
 
-export interface ITweetStatus {
-  created_at: string;
+export interface ITweet extends IPost {
   entities: ITweetEntities;
-  id: number;
   id_str?: string;
   text: string;
-  hidden?: boolean;
   full_text?: string;
-  url: string;
   retweet_count: number;
-  lang: string;
-  sentiment?: string;
-  category?: string;
-  translation?: string;
 }
 
 interface ITweetData {
-  statuses: ITweetStatus[];
+  statuses: ITweet[];
 }
 
 export default class Twitter {
-  public static format = (data: ITweetStatus[]): ITweetStatus[] => {
+  public static format = (data: ITweet[]): IPost[] => {
     return data.map(
-      ({
-        created_at,
-        entities,
-        id,
-        id_str,
+      ({ created, id_str, lang, full_text, retweet_count }: ITweet): IPost => ({
+        created,
         lang,
-        full_text,
-        retweet_count,
-      }) => ({
-        created_at,
-        entities,
-        id,
-        id_str,
-        lang,
-        retweet_count,
+        id: id_str,
+        likes: retweet_count,
         text: full_text,
+        type: PostType.Twitter,
         url: `https://twitter.com/user/status/${id_str}`,
       }),
     );
@@ -72,13 +56,13 @@ export default class Twitter {
     });
   }
 
-  public async get(ids: string[]) {
+  public async get(ids: string[]): Promise<IPost[]> {
     try {
       const result = await this.twit.get('statuses/lookup', {
         id: ids.join(','),
       });
 
-      return Twitter.format(result.data as ITweetStatus[]);
+      return Twitter.format(result.data as ITweet[]);
     } catch (e) {
       const reason = new Error('failed searching tweets');
       reason.stack += `\nCaused By:\n ${e.stack}`;
@@ -86,7 +70,11 @@ export default class Twitter {
     }
   }
 
-  public async search(term: string, count: number = 50, maxId: string) {
+  public async search(
+    term: string,
+    count: number = 50,
+    maxId: string,
+  ): Promise<IPost[]> {
     try {
       const result = await this.twit.get('search/tweets', {
         count,
@@ -96,8 +84,7 @@ export default class Twitter {
         tweet_mode: 'extended',
       });
 
-      return Twitter.format((result.data as ITweetData)
-        .statuses as ITweetStatus[]);
+      return Twitter.format((result.data as ITweetData).statuses as ITweet[]);
     } catch (e) {
       const reason = new Error('failed searching tweets');
       reason.stack += `\nCaused By:\n ${e.stack}`;

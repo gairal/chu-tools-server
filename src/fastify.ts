@@ -4,6 +4,7 @@ import * as functions from 'firebase-functions';
 import { IncomingMessage } from 'http';
 
 import Auth from './functions/Auth';
+import Reddits from './functions/Reddits';
 import Sheets from './functions/Sheets';
 import Translates from './functions/Translates';
 import Trashes from './functions/Trashes';
@@ -53,6 +54,10 @@ fast.get('/auth', async request => {
 
 fast.get('/tweets', async request => {
   return route(request, Tweets, request.query as { q: string });
+});
+
+fast.get('/reddits', async request => {
+  return route(request, Reddits, request.query as { q: string });
 });
 
 fast.get('/translates', async request => {

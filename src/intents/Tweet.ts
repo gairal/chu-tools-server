@@ -24,10 +24,10 @@ export default class Tweet extends Intent {
   ) {
     try {
       const tweets = await this.twitter.search(term, count, max_id);
-      const trashedtweets = await this.trash.get(tweets.map(t => t.id_str));
+      const trashedTweets = await this.trash.get(tweets.map(t => t.id));
 
       tweets.forEach(t => {
-        if (trashedtweets.includes(t.id_str)) {
+        if (trashedTweets.includes(t.id)) {
           t.hidden = true;
         }
       });
