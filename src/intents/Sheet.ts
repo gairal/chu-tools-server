@@ -3,8 +3,8 @@ import { sheets_v4, translate_v2 } from 'googleapis';
 
 import SheetWriter, { ISheetData } from '../clients/SheetWriter';
 import Translator from '../clients/Translator';
-import { ITweet } from '../clients/Twitter';
 import { IAuthReturn } from '../functions/FBFunction';
+import { IPost } from '../types';
 import Intent from './ChuIntent';
 
 interface ISheetReturn {
@@ -69,18 +69,14 @@ export default class Sheet extends Intent {
     this.db = admin.firestore();
   }
 
-  public async request(
-    auth: IAuthReturn,
-    params: ISheetParam,
-    tweets: ITweet[],
-  ) {
+  public async request(auth: IAuthReturn, params: ISheetParam, posts: IPost[]) {
     try {
-      const translatedTweets = await this.translateTweets(tweets);
-      const values = await this.getOrderedTweets(translatedTweets);
+      const translatedPosts = await this.translatePosts(posts);
+      const values = await this.getOrderedPosts(translatedPosts);
 
       const result = await this.sheetWriter.write(params.spreadsheetId, values);
 
-      await this.persisteSaved(tweets);
+      await this.persisteSaved(posts);
 
       return Sheet.format(result as ISheetData);
     } catch (e) {
@@ -89,14 +85,14 @@ export default class Sheet extends Intent {
     }
   }
 
-  private translateTweets = async (tweets: ITweet[]) => {
+  private translatePosts = async (posts: IPost[]) => {
     try {
-      const splitTweets = tweets.reduce(
-        (acc, t) => {
-          if (['en', 'und'].includes(t.lang) || !!t.translation) {
-            acc.untranslatable.push(t);
+      const splitPosts = posts.reduce(
+        (acc, p) => {
+          if (!p.lang || ['en', 'und'].includes(p.lang) || !!p.translation) {
+            acc.untranslatable.push(p);
           } else {
-            acc.translatable.push(t);
+            acc.translatable.push(p);
           }
 
           return acc;
@@ -105,7 +101,7 @@ export default class Sheet extends Intent {
       );
 
       const mapping: string[] = [];
-      const tweetsByLanguages = splitTweets.translatable.reduce((acc, t) => {
+      const postsByLanguages = splitPosts.translatable.reduce((acc, t) => {
         if (!mapping.includes(t.lang)) {
           mapping.push(t.lang);
           acc[mapping.indexOf(t.lang)] = [];
@@ -118,58 +114,56 @@ export default class Sheet extends Intent {
       // tslint:disable-next-line:array-type
       const promises: Promise<
         translate_v2.Schema$TranslationsResource[]
-      >[] = tweetsByLanguages.map((v: ITweet[], i: number) =>
-        this.translator.translate(mapping[i], v.map((t: ITweet) => t.text)),
+      >[] = postsByLanguages.map((v: IPost[], i: number) =>
+        this.translator.translate(mapping[i], v.map((t: IPost) => t.text)),
       );
 
       const res = await Promise.all(promises);
 
-      const ret = tweetsByLanguages.reduce((
-        acc: ITweet[],
-        lang: ITweet[],
+      const ret = postsByLanguages.reduce((
+        acc: IPost[],
+        lang: IPost[],
         i: number,
       ) => {
         lang.forEach((t, j) => {
-          // add the translation to the tweets
+          // add the translation to the posts
           t.translation = res[i][j].translatedText;
         });
         return acc.concat(lang);
       }, []);
 
-      return splitTweets.untranslatable.concat(ret);
+      return splitPosts.untranslatable.concat(ret);
     } catch (e) {
-      const reason = new Error('failed translating tweets');
+      const reason = new Error('failed translating post');
       reason.stack += `\nCaused By:\n ${e.stack}`;
       throw reason;
     }
   };
 
-  private persisteSaved = async (tweets: ITweet[]) => {
-    const tweetsIds = tweets.map(t => t.id);
+  private persisteSaved = async (posts: IPost[]) => {
+    const postsIds = posts.map(t => t.id);
 
     try {
       const batch = this.db.batch();
       const collection = this.db.collection('savedTweets');
-      tweetsIds.forEach(id => {
+      postsIds.forEach(id => {
         const doc = collection.doc(id);
         batch.set(doc, {});
       });
 
       await batch.commit();
 
-      return tweetsIds;
+      return postsIds;
     } catch (e) {
-      const reason = new Error('failed persisting saved tweets');
+      const reason = new Error('failed persisting saved posts');
       reason.stack += `\nCaused By:\n ${e.stack}`;
       throw reason;
     }
   };
 
-  private getOrderedTweets = (
-    tweets: ITweet[],
-  ): sheets_v4.Schema$ValueRange => {
+  private getOrderedPosts = (posts: IPost[]): sheets_v4.Schema$ValueRange => {
     try {
-      const values = tweets.reduce(
+      const values = posts.reduce(
         (rows, { created, id, text, url, category, sentiment, translation }) =>
           rows.concat([
             [
@@ -187,7 +181,7 @@ export default class Sheet extends Intent {
 
       return { values };
     } catch (e) {
-      const reason = new Error('failed searching tweets');
+      const reason = new Error('failed ordering posts');
       reason.stack += `\nCaused By:\n ${e.stack}`;
       throw reason;
     }

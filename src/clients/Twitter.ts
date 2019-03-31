@@ -3,40 +3,18 @@ import * as Twit from 'twit';
 import config from '../config';
 import { IPost, PostType } from '../types';
 
-interface ITweeturls {
-  url: string;
-  expanded_url: string;
-  indices: number[];
-}
-
-interface ITweetHashtag {
-  text: string;
-  indices: number[];
-}
-
-interface ITweetEntities {
-  hashtags: ITweetHashtag[];
-  urls: ITweeturls[];
-}
-
-export interface ITweet extends IPost {
-  entities: ITweetEntities;
-  id_str?: string;
-  text: string;
-  full_text?: string;
-  retweet_count: number;
-}
-
-interface ITweetData {
-  statuses: ITweet[];
-}
-
 export default class Twitter {
-  public static format = (data: ITweet[]): IPost[] => {
+  public static format = (data: Twit.Twitter.Status[]): IPost[] => {
     return data.map(
-      ({ created, id_str, lang, full_text, retweet_count }: ITweet): IPost => ({
-        created,
+      ({
+        created_at,
+        id_str,
         lang,
+        full_text,
+        retweet_count,
+      }: Twit.Twitter.Status): IPost => ({
+        lang,
+        created: created_at,
         id: id_str,
         likes: retweet_count,
         text: full_text,
@@ -62,7 +40,7 @@ export default class Twitter {
         id: ids.join(','),
       });
 
-      return Twitter.format(result.data as ITweet[]);
+      return Twitter.format(result.data as Twit.Twitter.Status[]);
     } catch (e) {
       const reason = new Error('failed searching tweets');
       reason.stack += `\nCaused By:\n ${e.stack}`;
@@ -84,7 +62,9 @@ export default class Twitter {
         tweet_mode: 'extended',
       });
 
-      return Twitter.format((result.data as ITweetData).statuses as ITweet[]);
+      return Twitter.format(
+        (result.data as Twit.Twitter.SearchResults).statuses,
+      );
     } catch (e) {
       const reason = new Error('failed searching tweets');
       reason.stack += `\nCaused By:\n ${e.stack}`;

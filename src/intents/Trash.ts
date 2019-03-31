@@ -32,7 +32,7 @@ export default class Trash extends Intent {
 
       return res;
     } catch (e) {
-      console.error({ e, id, untrash }, 'error while trashing tweet');
+      console.error({ e, id, untrash }, 'error while trashing post');
       return null;
     }
   }

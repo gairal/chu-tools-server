@@ -13,7 +13,7 @@ export default class Reddit extends Intent {
   private reddit: RedditClient = null;
   private trash: TrashClient = null;
   constructor() {
-    super('tweet');
+    super('reddit');
     this.reddit = new RedditClient();
     this.trash = new TrashClient();
   }
@@ -27,7 +27,7 @@ export default class Reddit extends Intent {
 
       return posts;
     } catch (e) {
-      console.error({ e, term, count, max_id }, 'error while getting tweets');
+      console.error({ e, term, count, max_id }, 'error while getting reddits');
       return null;
     }
   }
