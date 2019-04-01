@@ -29,7 +29,7 @@ export default class Reddit {
         url,
       }: snoowrap.Submission): IPost => ({
         id,
-        created: new Date(created).toString(),
+        created: new Date(created * 1000).toString(),
         likes: score,
         text: selftext || url,
         type: PostType.Reddit,
@@ -59,6 +59,7 @@ export default class Reddit {
       const res = await r.search({
         limit,
         query,
+        after: `t3_${maxId}`,
         sort: 'new',
       } as IExtendedSearchOptions);
       return Reddit.format(res);
