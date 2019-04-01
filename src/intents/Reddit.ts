@@ -24,6 +24,13 @@ export default class Reddit extends Intent {
   ) {
     try {
       const posts = await this.reddit.search(`"${term}"`, +count, max_id);
+      const trashedPosts = await this.trash.get(posts.map(t => t.id));
+
+      posts.forEach(t => {
+        if (trashedPosts.includes(p.id)) {
+          p.hidden = true;
+        }
+      });
 
       return posts;
     } catch (e) {
