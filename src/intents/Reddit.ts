@@ -23,7 +23,7 @@ export default class Reddit extends Intent {
     { term, count, max_id }: ILRedditParam = { term: 'linkedin', count: 50 },
   ) {
     try {
-      const posts = await this.reddit.search(`"${term}"`, +count, max_id);
+      const posts = await this.reddit.search(`${term}`, +count, max_id);
       const trashedPosts = await this.trash.get(posts.map(t => t.id));
 
       posts.forEach(p => {
