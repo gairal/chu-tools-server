@@ -34,7 +34,7 @@
     "@types/twit": "^2.2",
     "fastify": "^2.15",
     "firebase-tools": "^6.5",
-    "nodemon": "^1.18",
+    "nodemon": "^3.1",
     "prettier": "^1.16",
     "ts-node": "^8.0",
     "tslint": "^5.14",
