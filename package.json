@@ -20,7 +20,7 @@
     "firebase-admin": "^7.1",
     "firebase-functions": "^2.2",
     "googleapis": "^39.0",
-    "node-fetch": "^2.3.0",
+    "node-fetch": "^2.7.0",
     "query-string": "^6.4",
     "snoowrap": "^1.15.2",
     "twit": "^2.2"
